@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import TopBar from '@/components/TopBar';
 
 export default function ClienteDashboard() {
-  const { role, loading, userId } = useUserRole();
+  const { isCliente, loading, userId } = useUserRole();
   const navigate = useNavigate();
   const [tenant, setTenant] = useState<any>(null);
   const [subscription, setSubscription] = useState<any>(null);
@@ -53,17 +53,17 @@ export default function ClienteDashboard() {
       }
     };
 
-    if (role === 'cliente') {
+    if (isCliente) {
       fetchTenantData();
     }
-  }, [role, userId]);
+  }, [isCliente, userId]);
 
   useEffect(() => {
-    if (!loading && role !== 'cliente') {
+    if (!loading && !isCliente) {
       navigate('/home');
       toast.error('Acesso negado');
     }
-  }, [role, loading, navigate]);
+  }, [isCliente, loading, navigate]);
 
   if (loading) {
     return (
@@ -73,7 +73,7 @@ export default function ClienteDashboard() {
     );
   }
 
-  if (role !== 'cliente') {
+  if (!isCliente) {
     return null;
   }
 

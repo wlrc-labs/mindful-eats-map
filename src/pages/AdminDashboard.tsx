@@ -12,7 +12,7 @@ import { CreateTenantDialog } from '@/components/CreateTenantDialog';
 import TopBar from '@/components/TopBar';
 
 export default function AdminDashboard() {
-  const { role, loading } = useUserRole();
+  const { isAdmin, loading } = useUserRole();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     tenants: 0,
@@ -21,13 +21,6 @@ export default function AdminDashboard() {
     revenue: 0,
     products: 0
   });
-
-  useEffect(() => {
-    if (!loading && role !== 'admin') {
-      navigate('/home');
-      toast.error('Acesso negado');
-    }
-  }, [role, loading, navigate]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -48,17 +41,17 @@ export default function AdminDashboard() {
       });
     };
 
-    if (role === 'admin') {
+    if (isAdmin) {
       fetchStats();
     }
-  }, [role]);
+  }, [isAdmin]);
 
   useEffect(() => {
-    if (!loading && role !== 'admin') {
+    if (!loading && !isAdmin) {
       navigate('/home');
       toast.error('Acesso negado');
     }
-  }, [role, loading, navigate]);
+  }, [isAdmin, loading, navigate]);
 
   if (loading) {
     return (
@@ -68,7 +61,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (role !== 'admin') {
+  if (!isAdmin) {
     return null;
   }
 

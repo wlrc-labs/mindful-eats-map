@@ -163,9 +163,14 @@ const Auth = () => {
         } else {
           navigate('/home');
         }
+      } else if (roles.includes('cliente')) {
+        // Usuário com role cliente vai para dashboard do estabelecimento
+        navigate('/cliente');
+      } else if (roles.includes('admin')) {
+        // Admin vai para painel administrativo
+        navigate('/admin');
       } else {
-        // Usuário tem role(s) - vai sempre para home
-        // Pode escolher o painel desejado através do menu dropdown
+        // Fallback para home
         navigate('/home');
       }
 
