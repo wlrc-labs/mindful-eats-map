@@ -74,7 +74,7 @@ const Auth = () => {
       }
 
       toast.success("Conta criada! Redirecionando...");
-      setTimeout(() => navigate("/profile-setup"), 1000);
+      setTimeout(() => navigate("/role-selection"), 1000);
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -93,7 +93,7 @@ const Auth = () => {
       const validated = authSchema.parse({ email, password });
       setLoading(true);
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email: validated.email,
         password: validated.password,
       });
@@ -107,8 +107,21 @@ const Auth = () => {
         return;
       }
 
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+      if (!roleData) {
+        navigate('/role-selection');
+      } else if (roleData.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/cliente');
+      }
+
       toast.success("Login realizado! Redirecionando...");
-      setTimeout(() => navigate("/home"), 1000);
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);

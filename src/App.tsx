@@ -7,6 +7,9 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ProfileSetup from "./pages/ProfileSetup";
 import Home from "./pages/Home";
+import RoleSelection from "./pages/RoleSelection";
+import AdminDashboard from "./pages/AdminDashboard";
+import ClienteDashboard from "./pages/ClienteDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,7 +24,10 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="/role-selection" element={<RoleSelection />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/cliente" element={<ClienteDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
