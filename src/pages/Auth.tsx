@@ -73,8 +73,8 @@ const Auth = () => {
         return;
       }
 
-      toast.success("Conta criada! Redirecionando...");
-      setTimeout(() => navigate("/role-selection"), 1000);
+      toast.success("Conta criada! Configure seu perfil...");
+      navigate("/profile-setup");
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -114,7 +114,18 @@ const Auth = () => {
         .maybeSingle();
 
       if (!roleData) {
-        navigate('/role-selection');
+        // Usuário comum sem role definida
+        const { data: profileData } = await supabase
+          .from('user_dietary_profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (!profileData) {
+          navigate('/profile-setup');
+        } else {
+          navigate('/home');
+        }
       } else if (roleData.role === 'admin') {
         navigate('/admin');
       } else {
