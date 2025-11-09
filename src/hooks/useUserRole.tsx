@@ -4,51 +4,54 @@ import { supabase } from '@/integrations/supabase/client';
 export type UserRole = 'admin' | 'cliente' | null;
 
 export const useUserRole = () => {
-  const [role, setRole] = useState<UserRole>(null);
+  const [roles, setRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
+    const fetchUserRoles = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          setRole(null);
+          setRoles([]);
           setLoading(false);
           return;
         }
 
         setUserId(user.id);
 
-        const { data: roleData, error } = await supabase
+        const { data: rolesData, error } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
-          .maybeSingle();
+          .eq('user_id', user.id);
 
         if (error) {
-          console.error('Error fetching role:', error);
-          setRole(null);
+          console.error('Error fetching roles:', error);
+          setRoles([]);
         } else {
-          setRole(roleData?.role as UserRole || null);
+          setRoles(rolesData?.map(r => r.role as UserRole) || []);
         }
       } catch (error) {
         console.error('Error:', error);
-        setRole(null);
+        setRoles([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserRole();
+    fetchUserRoles();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      fetchUserRole();
+      fetchUserRoles();
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  return { role, loading, userId, isAdmin: role === 'admin', isCliente: role === 'cliente' };
+  const role = roles[0] || null;
+  const isAdmin = roles.includes('admin');
+  const isCliente = roles.includes('cliente');
+
+  return { role, roles, loading, userId, isAdmin, isCliente };
 };
