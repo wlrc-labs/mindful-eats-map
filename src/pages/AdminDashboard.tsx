@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Users, ShoppingCart, DollarSign, Package, Settings, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { CreateTenantDialog } from '@/components/CreateTenantDialog';
 
 export default function AdminDashboard() {
   const { role, loading } = useUserRole();
@@ -186,22 +187,26 @@ export default function AdminDashboard() {
 function TenantsTab() {
   const [tenants, setTenants] = useState<any[]>([]);
 
+  const fetchTenants = async () => {
+    const { data } = await supabase
+      .from('tenants')
+      .select('*, subscriptions(*)')
+      .order('created_at', { ascending: false });
+    setTenants(data || []);
+  };
+
   useEffect(() => {
-    const fetchTenants = async () => {
-      const { data } = await supabase
-        .from('tenants')
-        .select('*, subscriptions(*)')
-        .order('created_at', { ascending: false });
-      setTenants(data || []);
-    };
     fetchTenants();
   }, []);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Estabelecimentos Cadastrados</CardTitle>
-        <CardDescription>Gerencie todos os estabelecimentos da plataforma</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <div>
+          <CardTitle>Estabelecimentos Cadastrados</CardTitle>
+          <CardDescription>Gerencie todos os estabelecimentos da plataforma</CardDescription>
+        </div>
+        <CreateTenantDialog onSuccess={fetchTenants} />
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
