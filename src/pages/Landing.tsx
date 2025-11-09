@@ -43,14 +43,14 @@ const Landing = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild className="text-lg px-8 hover-lift">
-                <Link to="/auth">
-                  Começar agora
+                <Link to="/auth?type=user">
+                  Sou Usuário
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="text-lg px-8 hover-lift">
-                <Link to="/auth?partner=true">
-                  Sou um parceiro
+                <Link to="/auth?type=establishment">
+                  Sou Estabelecimento
                 </Link>
               </Button>
             </div>
@@ -141,7 +141,7 @@ const Landing = () => {
             asChild
             className="text-lg px-8 hover-scale"
           >
-            <Link to="/auth">Criar conta gratuita</Link>
+            <Link to="/auth?type=user">Criar conta gratuita</Link>
           </Button>
         </div>
       </section>

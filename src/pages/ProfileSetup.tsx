@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 
@@ -25,6 +27,9 @@ const ProfileSetup = () => {
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [restrictions, setRestrictions] = useState<DietaryRestriction[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [phone, setPhone] = useState('');
+  const [aboutMe, setAboutMe] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -84,6 +89,7 @@ const ProfileSetup = () => {
         .upsert({
           user_id: user.id,
           restrictions: selectedConditions,
+          notes: additionalNotes || null,
           updated_at: new Date().toISOString()
         });
 
@@ -149,6 +155,32 @@ const ProfileSetup = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="space-y-4 pb-6 border-b">
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone (opcional)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="(00) 00000-0000"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="about">Sobre você</Label>
+              <Textarea
+                id="about"
+                placeholder="Conte um pouco sobre você, suas preferências alimentares e estilo de vida..."
+                value={aboutMe}
+                onChange={(e) => setAboutMe(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Restrições Alimentares</h3>
           {restrictions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Nenhuma restrição alimentar disponível no momento
@@ -202,6 +234,18 @@ const ProfileSetup = () => {
               })}
             </div>
           )}
+          </div>
+
+          <div className="space-y-2 pt-6 border-t">
+            <Label htmlFor="notes">Observações adicionais sobre suas restrições</Label>
+            <Textarea
+              id="notes"
+              placeholder="Alguma informação importante? Alergias cruzadas? Sensibilidades específicas? Medicações?"
+              value={additionalNotes}
+              onChange={(e) => setAdditionalNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button

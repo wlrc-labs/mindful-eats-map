@@ -10,24 +10,37 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { z } from "zod";
+import { Turnstile } from "@marsidev/react-turnstile";
 import authBgImage from "@/assets/auth-bg.jpg";
 
 const authSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
+  confirmPassword: z.string().optional(),
   name: z.string().min(2, { message: "Nome deve ter no mínimo 2 caracteres" }).optional(),
+}).refine((data) => {
+  if (data.confirmPassword !== undefined) {
+    return data.password === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isPartner = searchParams.get("partner") === "true";
+  const userType = searchParams.get("type") || "user";
+  const isEstablishment = userType === "establishment";
   
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -43,22 +56,27 @@ const Auth = () => {
     e.preventDefault();
     
     try {
-      const validated = authSchema.parse({ email, password, name });
+      const validated = authSchema.parse({ email, password, confirmPassword, name });
       
       if (!acceptTerms) {
         toast.error("Você precisa aceitar os termos de uso e política de privacidade");
         return;
       }
 
+      if (!turnstileToken) {
+        toast.error("Por favor, complete a verificação de segurança");
+        return;
+      }
+
       setLoading(true);
 
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email: validated.email,
         password: validated.password,
         options: {
           data: {
             name: validated.name,
-            is_partner: isPartner,
+            is_establishment: isEstablishment,
           },
           emailRedirectTo: `${window.location.origin}/home`,
         },
@@ -73,8 +91,19 @@ const Auth = () => {
         return;
       }
 
-      toast.success("Conta criada! Configure seu perfil...");
-      navigate("/profile-setup");
+      if (isEstablishment) {
+        // Estabelecimentos vão direto para seleção de role
+        await supabase.from('user_roles').insert({
+          user_id: data.user!.id,
+          role: 'cliente'
+        });
+        toast.success("Conta criada! Redirecionando...");
+        navigate("/cliente");
+      } else {
+        // Usuários comuns vão para configuração de perfil
+        toast.success("Conta criada! Configure seu perfil...");
+        navigate("/profile-setup");
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -91,6 +120,12 @@ const Auth = () => {
     
     try {
       const validated = authSchema.parse({ email, password });
+      
+      if (!turnstileToken) {
+        toast.error("Por favor, complete a verificação de segurança");
+        return;
+      }
+
       setLoading(true);
 
       const { error, data } = await supabase.auth.signInWithPassword({
@@ -107,13 +142,15 @@ const Auth = () => {
         return;
       }
 
-      const { data: roleData } = await supabase
+      // Buscar todas as roles do usuário
+      const { data: rolesData } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
+        .eq('user_id', data.user.id);
 
-      if (!roleData) {
+      const roles = rolesData?.map(r => r.role) || [];
+
+      if (roles.length === 0) {
         // Usuário comum sem role definida
         const { data: profileData } = await supabase
           .from('user_dietary_profiles')
@@ -126,10 +163,16 @@ const Auth = () => {
         } else {
           navigate('/home');
         }
-      } else if (roleData.role === 'admin') {
-        navigate('/admin');
+      } else if (roles.length === 1) {
+        // Usuário tem apenas uma role
+        if (roles[0] === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/cliente');
+        }
       } else {
-        navigate('/cliente');
+        // Usuário tem múltiplas roles - vai para seleção
+        navigate('/dashboard-selection');
       }
 
       toast.success("Login realizado! Redirecionando...");
@@ -174,7 +217,7 @@ const Auth = () => {
               Alimmenta
             </CardTitle>
             <CardDescription>
-              {isPartner ? "Portal do Parceiro" : "Bem-vindo de volta"}
+              {isEstablishment ? "Portal do Estabelecimento" : "Bem-vindo de volta"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -208,6 +251,13 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Verificação de segurança</Label>
+                    <Turnstile
+                      siteKey="1x00000000000000000000AA"
+                      onSuccess={(token) => setTurnstileToken(token)}
                     />
                   </div>
                   <Button
@@ -265,6 +315,18 @@ const Auth = () => {
                       disabled={loading}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm-password">Confirmar senha</Label>
+                    <Input
+                      id="signup-confirm-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
                   <div className="flex items-start space-x-2">
                     <Checkbox
                       id="terms"
@@ -278,6 +340,13 @@ const Auth = () => {
                     >
                       Aceito os termos de uso e política de privacidade (LGPD)
                     </label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Verificação de segurança</Label>
+                    <Turnstile
+                      siteKey="1x00000000000000000000AA"
+                      onSuccess={(token) => setTurnstileToken(token)}
+                    />
                   </div>
                   <Button
                     type="submit"
