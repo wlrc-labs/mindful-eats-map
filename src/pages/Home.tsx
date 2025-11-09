@@ -1,23 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Search,
   MapPin,
-  Star,
   Filter,
-  LogOut,
-  User,
   Store,
   Utensils,
   ShoppingBag,
 } from "lucide-react";
+import TopBar from "@/components/TopBar";
+import CategoryIcons from "@/components/CategoryIcons";
+import FeaturedSlider from "@/components/FeaturedSlider";
+import PlaceCard from "@/components/PlaceCard";
 
 const mockPlaces = [
   {
@@ -66,6 +63,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [filteredPlaces, setFilteredPlaces] = useState(mockPlaces);
 
   useEffect(() => {
@@ -89,8 +87,21 @@ const Home = () => {
   }, [navigate]);
 
   useEffect(() => {
+    let filtered = mockPlaces;
+
+    // Filter by category
+    if (selectedCategory) {
+      filtered = filtered.filter((place) => {
+        if (selectedCategory === "markets") return place.type === "market";
+        if (selectedCategory === "restaurants") return place.type === "restaurant";
+        if (selectedCategory === "stores") return place.type === "store";
+        return true;
+      });
+    }
+
+    // Filter by search query
     if (searchQuery.trim()) {
-      const filtered = mockPlaces.filter(
+      filtered = filtered.filter(
         (place) =>
           place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           place.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -98,28 +109,21 @@ const Home = () => {
             tag.toLowerCase().includes(searchQuery.toLowerCase())
           )
       );
-      setFilteredPlaces(filtered);
-    } else {
-      setFilteredPlaces(mockPlaces);
     }
-  }, [searchQuery]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Logout realizado com sucesso");
-    navigate("/");
-  };
+    setFilteredPlaces(filtered);
+  }, [searchQuery, selectedCategory]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "market":
-        return <ShoppingBag className="h-5 w-5" />;
+        return <ShoppingBag className="h-6 w-6" />;
       case "restaurant":
-        return <Utensils className="h-5 w-5" />;
+        return <Utensils className="h-6 w-6" />;
       case "store":
-        return <Store className="h-5 w-5" />;
+        return <Store className="h-6 w-6" />;
       default:
-        return <Store className="h-5 w-5" />;
+        return <Store className="h-6 w-6" />;
     }
   };
 
@@ -136,49 +140,45 @@ const Home = () => {
     }
   };
 
+  const enrichedPlaces = filteredPlaces.map(place => ({
+    ...place,
+    typeIcon: getTypeIcon(place.type),
+    typeLabel: getTypeLabel(place.type),
+    deliveryTime: "30-45 min",
+    minOrder: place.type === "restaurant" ? "R$ 20,00" : undefined,
+  }));
+
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-primary">Alimmenta</h1>
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
-                <User className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* TopBar */}
+      <TopBar userName={user?.user_metadata?.name || user?.email?.split('@')[0]} cartItemsCount={0} />
+
+      {/* Category Icons */}
+      <CategoryIcons 
+        selectedCategory={selectedCategory}
+        onCategorySelect={setSelectedCategory}
+      />
+
+      {/* Featured Slider */}
+      <FeaturedSlider />
 
       {/* Search Section */}
-      <section className="bg-gradient-hero py-8 border-b">
+      <section className="bg-muted/30 py-6 border-b">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto space-y-4">
+          <div className="max-w-3xl mx-auto space-y-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Buscar restaurantes, mercados ou produtos..."
-                className="pl-10 pr-12 h-12 text-base"
+                placeholder="Buscar restaurantes, mercados ou produtos seguros..."
+                className="pl-12 pr-4 h-14 text-base shadow-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Button
-                size="icon"
-                variant="ghost"
-                className="absolute right-1 top-1/2 -translate-y-1/2"
-              >
-                <Filter className="h-5 w-5" />
-              </Button>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
+              <MapPin className="h-4 w-4 text-primary" />
               <span>São Paulo, SP - Centro</span>
             </div>
           </div>
@@ -186,83 +186,32 @@ const Home = () => {
       </section>
 
       {/* Places List */}
-      <section className="py-8">
+      <section className="py-6">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-5xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">
-                {searchQuery
+                {searchQuery || selectedCategory
                   ? `${filteredPlaces.length} resultado(s) encontrado(s)`
-                  : "Locais próximos a você"}
+                  : "Recomendados para você"}
               </h2>
             </div>
 
             {filteredPlaces.length === 0 ? (
-              <Card className="text-center py-12">
+              <Card className="text-center py-16">
                 <CardContent>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-lg">
                     Nenhum local encontrado com esses critérios
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Tente ajustar os filtros ou a busca
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {filteredPlaces.map((place, index) => (
-                  <Card
-                    key={place.id}
-                    className="hover-lift cursor-pointer animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                    onClick={() => toast.info("Funcionalidade em desenvolvimento")}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="p-2 bg-primary/10 rounded-lg">
-                              {getTypeIcon(place.type)}
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg">
-                                {place.name}
-                              </CardTitle>
-                              <CardDescription className="text-xs">
-                                {getTypeLabel(place.type)}
-                              </CardDescription>
-                            </div>
-                          </div>
-                        </div>
-                        {place.certified && (
-                          <Badge className="bg-safe text-safe-foreground">
-                            Certificado
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        {place.description}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {place.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          {place.distance}
-                        </div>
-                        <div className="flex items-center gap-1 text-yellow-500">
-                          <Star className="h-4 w-4 fill-current" />
-                          <span className="font-medium text-foreground">
-                            {place.rating}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+              <div className="grid gap-4 md:grid-cols-2">
+                {enrichedPlaces.map((place, index) => (
+                  <PlaceCard key={place.id} place={place} index={index} />
                 ))}
               </div>
             )}

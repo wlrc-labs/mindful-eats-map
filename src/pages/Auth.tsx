@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
 import { z } from "zod";
+import authBgImage from "@/assets/auth-bg.jpg";
 
 const authSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
@@ -121,11 +121,21 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-      <div className="w-full max-w-md animate-fade-in">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{
+        backgroundImage: `url(${authBgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Overlay for better contrast */}
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
+      
+      <div className="w-full max-w-md animate-fade-in relative z-10">
         <Button
           variant="ghost"
-          className="mb-4"
+          className="mb-4 bg-background/50 backdrop-blur-md hover:bg-background/70"
           asChild
         >
           <Link to="/">
@@ -134,7 +144,7 @@ const Auth = () => {
           </Link>
         </Button>
 
-        <Card className="shadow-card">
+        <Card className="shadow-card bg-background/80 backdrop-blur-md border-2">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-3xl font-bold text-primary">
               Alimmenta

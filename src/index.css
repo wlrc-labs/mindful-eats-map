@@ -171,6 +171,15 @@ All colors MUST be HSL.
   .bg-gradient-hero {
     background: var(--gradient-hero);
   }
+
+  /* Hide scrollbar utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes fade-in {

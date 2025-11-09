@@ -1,9 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, MapPin, Shield, Heart, Users, ArrowRight } from "lucide-react";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  // Check if user is already logged in OR if mobile (redirect to auth)
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/home");
+      } else if (isMobile) {
+        navigate("/auth");
+      }
+    };
+    checkAuth();
+  }, [navigate, isMobile]);
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
