@@ -1,9 +1,10 @@
-import { ShoppingCart, User, LogOut, Settings } from "lucide-react";
+import { ShoppingCart, User, LogOut, Settings, Home, Building2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface TopBarProps {
   userName?: string;
@@ -19,6 +21,7 @@ interface TopBarProps {
 
 const TopBar = ({ userName = "Usuário", cartItemsCount = 0 }: TopBarProps) => {
   const navigate = useNavigate();
+  const { isAdmin, isCliente } = useUserRole();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -58,7 +61,26 @@ const TopBar = ({ userName = "Usuário", cartItemsCount = 0 }: TopBarProps) => {
                   <span className="hidden sm:inline">{userName}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 bg-popover">
+                <DropdownMenuLabel>Painéis</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => navigate("/home")}>
+                  <Home className="mr-2 h-4 w-4" />
+                  Painel Usuário
+                </DropdownMenuItem>
+                {isCliente && (
+                  <DropdownMenuItem onClick={() => navigate("/cliente")}>
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Painel Cliente
+                  </DropdownMenuItem>
+                )}
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Painel Admin
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Configurações</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => navigate("/profile-setup")}>
                   <Settings className="mr-2 h-4 w-4" />
                   Perfil Alimentar

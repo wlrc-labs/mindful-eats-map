@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Package, ShoppingCart, BarChart3, Settings, LogOut, Plus, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import TopBar from '@/components/TopBar';
 
 export default function ClienteDashboard() {
   const { role, loading, userId } = useUserRole();
@@ -22,13 +23,6 @@ export default function ClienteDashboard() {
     orders: 0,
     revenue: 0
   });
-
-  useEffect(() => {
-    if (!loading && role !== 'cliente') {
-      navigate('/home');
-      toast.error('Acesso negado');
-    }
-  }, [role, loading, navigate]);
 
   useEffect(() => {
     const fetchTenantData = async () => {
@@ -64,10 +58,12 @@ export default function ClienteDashboard() {
     }
   }, [role, userId]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/auth');
-  };
+  useEffect(() => {
+    if (!loading && role !== 'cliente') {
+      navigate('/home');
+      toast.error('Acesso negado');
+    }
+  }, [role, loading, navigate]);
 
   if (loading) {
     return (
@@ -87,18 +83,7 @@ export default function ClienteDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Package className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">{tenant.name}</h1>
-          </div>
-          <Button variant="ghost" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair
-          </Button>
-        </div>
-      </header>
+      <TopBar userName={tenant.name} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">

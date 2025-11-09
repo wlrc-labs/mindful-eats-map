@@ -163,16 +163,10 @@ const Auth = () => {
         } else {
           navigate('/home');
         }
-      } else if (roles.length === 1) {
-        // Usuário tem apenas uma role
-        if (roles[0] === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/cliente');
-        }
       } else {
-        // Usuário tem múltiplas roles - vai para seleção
-        navigate('/dashboard-selection');
+        // Usuário tem role(s) - vai sempre para home
+        // Pode escolher o painel desejado através do menu dropdown
+        navigate('/home');
       }
 
       toast.success("Login realizado! Redirecionando...");
